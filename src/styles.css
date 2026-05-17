@@ -1,0 +1,115 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Modern forensic / data-tool palette: deep slate + emerald */
+  --background: oklch(0.17 0.012 240);
+  --foreground: oklch(0.96 0.005 240);
+  --card: oklch(0.21 0.013 240);
+  --card-foreground: oklch(0.96 0.005 240);
+  --popover: oklch(0.21 0.013 240);
+  --popover-foreground: oklch(0.96 0.005 240);
+  --primary: oklch(0.78 0.16 165);            /* emerald */
+  --primary-foreground: oklch(0.17 0.012 240);
+  --secondary: oklch(0.26 0.013 240);
+  --secondary-foreground: oklch(0.96 0.005 240);
+  --muted: oklch(0.24 0.012 240);
+  --muted-foreground: oklch(0.66 0.015 240);
+  --accent: oklch(0.72 0.14 220);             /* cool blue */
+  --accent-foreground: oklch(0.17 0.012 240);
+  --destructive: oklch(0.66 0.21 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.013 240);
+  --input: oklch(0.24 0.012 240);
+  --ring: oklch(0.78 0.16 165);
+  --success: oklch(0.78 0.16 165);
+  --warning: oklch(0.78 0.16 75);
+}
+
+.dark { color-scheme: dark; }
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    min-height: 100vh;
+    background-image:
+      radial-gradient(80% 50% at 50% 0%, color-mix(in oklab, var(--primary) 6%, transparent), transparent 70%);
+  }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.015em; font-weight: 400; }
+}
+
+@layer utilities {
+  .surface {
+    background: linear-gradient(180deg,
+      color-mix(in oklab, var(--card) 100%, transparent),
+      color-mix(in oklab, var(--card) 92%, var(--background)));
+    border: 1px solid var(--border);
+  }
+  .surface-hover { transition: border-color .2s ease, background-color .2s ease, transform .2s ease; }
+  .surface-hover:hover { border-color: color-mix(in oklab, var(--primary) 50%, var(--border)); }
+  .ring-glow { box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent), 0 8px 32px -8px color-mix(in oklab, var(--primary) 25%, transparent); }
+  .text-balance { text-wrap: balance; }
+  .mono { font-family: var(--font-mono); }
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--foreground) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 4%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border);
+    background: color-mix(in oklab, var(--card) 70%, transparent);
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+  }
+  .chip-dot::before {
+    content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor;
+  }
+}
