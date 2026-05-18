@@ -27,23 +27,37 @@ export function ResultsTable({ result }: { result: QueryResult | null }) {
     <div className="surface rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card/60">
         <span className="mono text-xs text-muted-foreground">Results</span>
-        <span className="mono text-xs text-primary">{result.rowCount} row{result.rowCount === 1 ? "" : "s"}</span>
+        <span className="mono text-xs text-primary">
+          {result.rowCount} row{result.rowCount === 1 ? "" : "s"}
+        </span>
       </div>
       <div className="overflow-auto max-h-72">
         <table className="w-full text-sm mono">
           <thead>
             <tr className="bg-secondary/40">
               {result.columns.map((c, i) => (
-                <th key={i} className="text-left px-3 py-2 text-xs text-muted-foreground uppercase tracking-wider border-b border-border font-medium">{c}</th>
+                <th
+                  key={i}
+                  className="text-left px-3 py-2 text-xs text-muted-foreground uppercase tracking-wider border-b border-border font-medium"
+                >
+                  {c}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {result.rows.map((row, ri) => (
-              <tr key={ri} className="hover:bg-secondary/30 border-b border-border/40 last:border-0">
+              <tr
+                key={ri}
+                className="hover:bg-secondary/30 border-b border-border/40 last:border-0"
+              >
                 {row.map((cell, ci) => (
                   <td key={ci} className="px-3 py-1.5 text-foreground/90 whitespace-nowrap">
-                    {cell === null ? <span className="text-muted-foreground italic">NULL</span> : String(cell)}
+                    {cell === null ? (
+                      <span className="text-muted-foreground italic">NULL</span>
+                    ) : (
+                      String(cell)
+                    )}
                   </td>
                 ))}
               </tr>

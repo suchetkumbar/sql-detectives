@@ -1,21 +1,23 @@
 // Case definitions. Each case = a self-contained SQLite world plus a narrative arc.
 export type Difficulty = "beginner" | "intermediate" | "advanced";
+export type SqlCell = string | number | Uint8Array | null;
+export type SqlRow = SqlCell[];
 
 export interface Chapter {
   id: string;
   title: string;
-  narrative: string;        // prose shown above the editor
-  task: string;             // the actual challenge prompt
+  narrative: string; // prose shown above the editor
+  task: string; // the actual challenge prompt
   hint: string;
   starterSql?: string;
   // Validation: a function that gets the result rows + columns and returns ok.
-  validate: (rows: any[][], columns: string[]) => { ok: boolean; message?: string };
-  reveal: string;           // story beat unlocked on success
+  validate: (rows: SqlRow[], columns: string[]) => { ok: boolean; message?: string };
+  reveal: string; // story beat unlocked on success
 }
 
 export interface RapidFireQuestion {
   prompt: string;
-  options: string[];        // 4 options
+  options: string[]; // 4 options
   correctIndex: number;
   explanation: string;
 }
@@ -36,12 +38,12 @@ export interface Case {
   year: string;
   synopsis: string;
   victim: string;
-  schema: string;                 // SQL to bootstrap the DB
-  schemaSummary: string;          // human-readable schema reference (markdown-ish)
+  schema: string; // SQL to bootstrap the DB
+  schemaSummary: string; // human-readable schema reference (markdown-ish)
   chapters: Chapter[];
   rapidFire: {
     intro: string;
-    timePerQuestion: number;      // seconds
+    timePerQuestion: number; // seconds
     questions: RapidFireQuestion[];
     failureConsequence: string;
     successReward: string;
@@ -54,15 +56,17 @@ export interface Case {
 // ─────────────────────────────────────────────────────────────────────────────
 // Validators
 // ─────────────────────────────────────────────────────────────────────────────
-const rowsToSet = (rows: any[][]) => new Set(rows.map(r => r.map(v => String(v ?? "")).join("|")));
-const equalsSet = (rows: any[][], expected: any[][]) => {
-  const a = rowsToSet(rows), b = rowsToSet(expected);
+const rowsToSet = (rows: SqlRow[]) =>
+  new Set(rows.map((r) => r.map((v) => String(v ?? "")).join("|")));
+const equalsSet = (rows: SqlRow[], expected: SqlRow[]) => {
+  const a = rowsToSet(rows),
+    b = rowsToSet(expected);
   if (a.size !== b.size) return false;
   for (const x of a) if (!b.has(x)) return false;
   return true;
 };
-const containsRow = (rows: any[][], values: any[]) => {
-  const key = values.map(v => String(v ?? "")).join("|");
+const containsRow = (rows: SqlRow[], values: SqlRow) => {
+  const key = values.map((v) => String(v ?? "")).join("|");
   return rowsToSet(rows).has(key);
 };
 
@@ -76,7 +80,8 @@ const CASE_VELVET: Case = {
   tagline: "A jazz singer. A spilled martini. A body behind the curtain.",
   location: "Manhattan, NYC",
   year: "1947",
-  synopsis: "Eleanor Voss, the toast of 52nd Street, was found dead in her dressing room ten minutes after her final set. The club was packed. Someone in that room knew. Walk the patrons one query at a time.",
+  synopsis:
+    "Eleanor Voss, the toast of 52nd Street, was found dead in her dressing room ten minutes after her final set. The club was packed. Someone in that room knew. Walk the patrons one query at a time.",
   victim: "Eleanor Voss — jazz vocalist, 29",
   schemaSummary: `
 **suspects** ( id, name, occupation, table_number, left_at )
@@ -124,35 +129,47 @@ INSERT INTO evidence VALUES
     {
       id: "c1",
       title: "Chapter I — The Guest List",
-      narrative: "The maître d' hands you a smudged guest list. Six names, six stories. Start by seeing every suspect the club had eyes on tonight.",
+      narrative:
+        "The maître d' hands you a smudged guest list. Six names, six stories. Start by seeing every suspect the club had eyes on tonight.",
       task: "List every suspect — their name and occupation.",
       hint: "SELECT name, occupation FROM suspects;",
       validate: (rows, cols) => {
-        if (cols.length < 2) return { ok: false, message: "Need at least two columns: name and occupation." };
-        return { ok: rows.length === 6, message: rows.length === 6 ? undefined : `Expected 6 suspects, got ${rows.length}.` };
+        if (cols.length < 2)
+          return { ok: false, message: "Need at least two columns: name and occupation." };
+        return {
+          ok: rows.length === 6,
+          message: rows.length === 6 ? undefined : `Expected 6 suspects, got ${rows.length}.`,
+        };
       },
-      reveal: "Six suspects. The clock ticks. Most are bluffing. One is bleeding through their cuffs.",
+      reveal:
+        "Six suspects. The clock ticks. Most are bluffing. One is bleeding through their cuffs.",
     },
     {
       id: "c2",
       title: "Chapter II — Who Stayed Late?",
-      narrative: "The coroner places time of death between 11:45 and 11:55 PM. Anyone who left before 11:45 has an alibi.",
+      narrative:
+        "The coroner places time of death between 11:45 and 11:55 PM. Anyone who left before 11:45 has an alibi.",
       task: "Find the names of suspects who left at or after '23:45'.",
       hint: "Use WHERE left_at >= '23:45'. Strings compare lexicographically here.",
       validate: (rows) => {
-        const expected = [["Marlon Reeves"],["Sal Moretti"],["Clara Wynn"]];
-        return { ok: equalsSet(rows, expected), message: "Looking for the three who lingered past 11:45." };
+        const expected = [["Marlon Reeves"], ["Sal Moretti"], ["Clara Wynn"]];
+        return {
+          ok: equalsSet(rows, expected),
+          message: "Looking for the three who lingered past 11:45.",
+        };
       },
-      reveal: "Three names. The saxophonist, the owner, the stage manager. The detective and the heiress are off the board.",
+      reveal:
+        "Three names. The saxophonist, the owner, the stage manager. The detective and the heiress are off the board.",
     },
     {
       id: "c3",
       title: "Chapter III — Table Three",
-      narrative: "Witness #1 said Vincent stormed off from table three. Who else was at table three?",
+      narrative:
+        "Witness #1 said Vincent stormed off from table three. Who else was at table three?",
       task: "List the names of every suspect seated at table 3.",
       hint: "WHERE table_number = 3",
       validate: (rows) => {
-        const expected = [["Iris DuPont"],["Vincent Cole"]];
+        const expected = [["Iris DuPont"], ["Vincent Cole"]];
         return { ok: equalsSet(rows, expected) };
       },
       reveal: "Iris and Vincent. Lovers' table — or something colder.",
@@ -163,34 +180,100 @@ INSERT INTO evidence VALUES
       narrative: "A monogrammed cufflink was found in the dressing room. Whose?",
       task: "Join the evidence and suspects tables. Return the suspect name AND the item, for evidence found in the 'dressing room' that is tied to a suspect.",
       hint: "JOIN suspects ON suspects.id = evidence.suspect_id WHERE found_near = 'dressing room'",
-      validate: (rows) => containsRow(rows, ["Vincent Cole","Monogrammed cufflink V.C."])
-        ? { ok: true } : { ok: false, message: "Your row should pair the suspect name with the item." },
-      reveal: "Vincent Cole. He swore he left early — and yet his cufflink lay six feet from the body.",
+      validate: (rows) =>
+        containsRow(rows, ["Vincent Cole", "Monogrammed cufflink V.C."])
+          ? { ok: true }
+          : { ok: false, message: "Your row should pair the suspect name with the item." },
+      reveal:
+        "Vincent Cole. He swore he left early — and yet his cufflink lay six feet from the body.",
     },
   ],
   rapidFire: {
-    intro: "Vincent is bolting. The fire escape creaks. You have 60 seconds at the precinct radio to keep the patrol from losing him — answer fast.",
+    intro:
+      "Vincent is bolting. The fire escape creaks. You have 60 seconds at the precinct radio to keep the patrol from losing him — answer fast.",
     timePerQuestion: 12,
     failureConsequence: "Vincent slips into the alley fog. The case goes cold for 11 years.",
-    successReward: "Patrol catches Vincent at the docks. He's in your interrogation room within the hour.",
+    successReward:
+      "Patrol catches Vincent at the docks. He's in your interrogation room within the hour.",
     questions: [
-      { prompt: "Which clause filters rows AFTER a GROUP BY?", options: ["WHERE","HAVING","FILTER","ORDER BY"], correctIndex: 1, explanation: "HAVING runs after aggregation; WHERE runs before." },
-      { prompt: "Which keyword returns only unique values?", options: ["UNIQUE","DISTINCT","ONLY","SET"], correctIndex: 1, explanation: "SELECT DISTINCT col removes duplicates." },
-      { prompt: "What does COUNT(*) return for a table of 0 rows?", options: ["NULL","0","Error","1"], correctIndex: 1, explanation: "COUNT always returns a number, never NULL." },
-      { prompt: "Which JOIN keeps every row from the LEFT table?", options: ["INNER","LEFT","RIGHT","CROSS"], correctIndex: 1, explanation: "LEFT JOIN preserves all left rows; unmatched right side is NULL." },
-      { prompt: "How do you sort newest first by a column 'ordered_at'?", options: ["ORDER BY ordered_at","SORT ordered_at DESC","ORDER BY ordered_at DESC","RANK ordered_at"], correctIndex: 2, explanation: "ORDER BY ... DESC for descending." },
+      {
+        prompt: "Which clause filters rows AFTER a GROUP BY?",
+        options: ["WHERE", "HAVING", "FILTER", "ORDER BY"],
+        correctIndex: 1,
+        explanation: "HAVING runs after aggregation; WHERE runs before.",
+      },
+      {
+        prompt: "Which keyword returns only unique values?",
+        options: ["UNIQUE", "DISTINCT", "ONLY", "SET"],
+        correctIndex: 1,
+        explanation: "SELECT DISTINCT col removes duplicates.",
+      },
+      {
+        prompt: "What does COUNT(*) return for a table of 0 rows?",
+        options: ["NULL", "0", "Error", "1"],
+        correctIndex: 1,
+        explanation: "COUNT always returns a number, never NULL.",
+      },
+      {
+        prompt: "Which JOIN keeps every row from the LEFT table?",
+        options: ["INNER", "LEFT", "RIGHT", "CROSS"],
+        correctIndex: 1,
+        explanation: "LEFT JOIN preserves all left rows; unmatched right side is NULL.",
+      },
+      {
+        prompt: "How do you sort newest first by a column 'ordered_at'?",
+        options: [
+          "ORDER BY ordered_at",
+          "SORT ordered_at DESC",
+          "ORDER BY ordered_at DESC",
+          "RANK ordered_at",
+        ],
+        correctIndex: 2,
+        explanation: "ORDER BY ... DESC for descending.",
+      },
     ],
   },
   suspects: [
-    { id:"1", name:"Marlon Reeves",  alias:"The Sax",     description:"Played the closing number. Whiskey on his breath." },
-    { id:"2", name:"Iris DuPont",    alias:"The Heiress", description:"Left early. Money to burn, motive unclear." },
-    { id:"3", name:"Sal Moretti",    alias:"The Owner",   description:"Walked Eleanor to her car most nights. Not tonight." },
-    { id:"4", name:"Hank Boyle",     alias:"The Tail",    description:"A detective at table seven. Tailing Moretti." },
-    { id:"5", name:"Clara Wynn",     alias:"Stagehand",   description:"Saw someone slip behind the curtain at 11:48." },
-    { id:"6", name:"Vincent Cole",   alias:"The Banker",  description:"Left his cufflink in a dead woman's dressing room." },
+    {
+      id: "1",
+      name: "Marlon Reeves",
+      alias: "The Sax",
+      description: "Played the closing number. Whiskey on his breath.",
+    },
+    {
+      id: "2",
+      name: "Iris DuPont",
+      alias: "The Heiress",
+      description: "Left early. Money to burn, motive unclear.",
+    },
+    {
+      id: "3",
+      name: "Sal Moretti",
+      alias: "The Owner",
+      description: "Walked Eleanor to her car most nights. Not tonight.",
+    },
+    {
+      id: "4",
+      name: "Hank Boyle",
+      alias: "The Tail",
+      description: "A detective at table seven. Tailing Moretti.",
+    },
+    {
+      id: "5",
+      name: "Clara Wynn",
+      alias: "Stagehand",
+      description: "Saw someone slip behind the curtain at 11:48.",
+    },
+    {
+      id: "6",
+      name: "Vincent Cole",
+      alias: "The Banker",
+      description: "Left his cufflink in a dead woman's dressing room.",
+    },
   ],
   murdererId: "6",
-  epilogue: "Vincent Cole — banker, fiancé to Iris, and Eleanor's secret. He'd been bleeding cash to her for two years. Tonight she asked for more. He brought a cord instead. The cufflink gave him up.",
+  epilogue:
+    "Vincent Cole — banker, fiancé to Iris, and Eleanor's secret. He'd been bleeding cash to her for two years. Tonight she asked for more. He brought a cord instead. The cufflink gave him up.",
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -203,7 +286,8 @@ const CASE_TRAIN: Case = {
   tagline: "Eight cars. Forty-one passengers. One stops breathing.",
   location: "British Midlands",
   year: "1962",
-  synopsis: "The 22:14 sleeper to Ashford pulled in with a corpse in Car 4. Conductor Whitlow swears the door was locked. The ticket logs and the porter's rounds are all you have.",
+  synopsis:
+    "The 22:14 sleeper to Ashford pulled in with a corpse in Car 4. Conductor Whitlow swears the door was locked. The ticket logs and the porter's rounds are all you have.",
   victim: "Dr. Edmund Hartley — pathologist, 58",
   schemaSummary: `
 **passengers** ( id, name, age, occupation )
@@ -268,7 +352,13 @@ INSERT INTO possessions VALUES
       task: "Return the names of every passenger whose ticket placed them in car 4.",
       hint: "JOIN passengers ON passengers.id = tickets.passenger_id WHERE car = 4",
       validate: (rows) => {
-        const expected = [["Dr. Edmund Hartley"],["Margaret Doyle"],["Lila Brennan"],["Thomas Pike"],["Nadia Kapoor"]];
+        const expected = [
+          ["Dr. Edmund Hartley"],
+          ["Margaret Doyle"],
+          ["Lila Brennan"],
+          ["Thomas Pike"],
+          ["Nadia Kapoor"],
+        ];
         return { ok: equalsSet(rows, expected) };
       },
       reveal: "Five passengers in Car 4. One of them dead, four with secrets.",
@@ -280,7 +370,7 @@ INSERT INTO possessions VALUES
       task: "Names of Car 4 passengers whose boarding station was NOT King's Cross (station id 1).",
       hint: "WHERE car = 4 AND boarded_at_station <> 1",
       validate: (rows) => {
-        const expected = [["Lila Brennan"],["Nadia Kapoor"]];
+        const expected = [["Lila Brennan"], ["Nadia Kapoor"]];
         return { ok: equalsSet(rows, expected) };
       },
       reveal: "Brennan and Kapoor walked in mid-journey. Both had reason to be near Hartley.",
@@ -288,55 +378,120 @@ INSERT INTO possessions VALUES
     {
       id: "c3",
       title: "Chapter III — Motive Search",
-      narrative: "Every passenger carries something. Cross-reference Car 4 passengers with their possessions.",
+      narrative:
+        "Every passenger carries something. Cross-reference Car 4 passengers with their possessions.",
       task: "List the name and item for every Car 4 passenger's possessions.",
       hint: "Two joins: passengers → tickets, passengers → possessions. Filter car = 4.",
       validate: (rows) => {
-        return { ok: rows.length >= 5 && containsRow(rows, ["Margaret Doyle","Vial labelled DIGOXIN"]) };
+        return {
+          ok: rows.length >= 5 && containsRow(rows, ["Margaret Doyle", "Vial labelled DIGOXIN"]),
+        };
       },
-      reveal: "Doyle: digoxin. Pike: a malpractice brief against the victim. Brennan: a grudge for an unpaid quote. Three motives, one corpse.",
+      reveal:
+        "Doyle: digoxin. Pike: a malpractice brief against the victim. Brennan: a grudge for an unpaid quote. Three motives, one corpse.",
     },
     {
       id: "c4",
       title: "Chapter IV — Pike's Alibi",
-      narrative: "The porter's log says Pike left Car 4 at Cambridge and returned at Ely. Was he in his seat when Hartley likely died (between Cambridge and Ely)?",
+      narrative:
+        "The porter's log says Pike left Car 4 at Cambridge and returned at Ely. Was he in his seat when Hartley likely died (between Cambridge and Ely)?",
       task: "Return every porter_log note for car 4 between stations 3 and 4 inclusive.",
       hint: "WHERE car = 4 AND station_id BETWEEN 3 AND 4",
-      validate: (rows) => rows.length === 2 ? { ok: true } : { ok: false, message: "Expected exactly 2 log entries." },
-      reveal: "Pike was gone exactly during the lethal window. But he came back. And the porter saw him.",
+      validate: (rows) =>
+        rows.length === 2
+          ? { ok: true }
+          : { ok: false, message: "Expected exactly 2 log entries." },
+      reveal:
+        "Pike was gone exactly during the lethal window. But he came back. And the porter saw him.",
     },
     {
       id: "c5",
       title: "Chapter V — Who Was Alone with Hartley?",
-      narrative: "Aggregate. Count Car 4 occupants present per station leg (using porter notes' implicit attendance is overkill — instead, use boarding order). Who had boarded by Cambridge but had nobody else awake nearby at the lethal moment?",
+      narrative:
+        "Aggregate. Count Car 4 occupants present per station leg (using porter notes' implicit attendance is overkill — instead, use boarding order). Who had boarded by Cambridge but had nobody else awake nearby at the lethal moment?",
       task: "Count Car 4 passengers who had boarded by station 3 (Cambridge). Return one row with that count.",
       hint: "SELECT COUNT(*) FROM tickets WHERE car = 4 AND boarded_at_station <= 3",
-      validate: (rows) => rows.length === 1 && Number(rows[0][0]) === 5 ? { ok: true } : { ok: false, message: "One row, one count." },
+      validate: (rows) =>
+        rows.length === 1 && Number(rows[0][0]) === 5
+          ? { ok: true }
+          : { ok: false, message: "One row, one count." },
       reveal: "All five were aboard by Cambridge. But only one was awake and unaccounted for.",
     },
   ],
   rapidFire: {
-    intro: "Ashford station, 02:04. The killer is one minute from disappearing into the crowd. Five SQL fundamentals — five seconds each — or they vanish into the platform fog.",
+    intro:
+      "Ashford station, 02:04. The killer is one minute from disappearing into the crowd. Five SQL fundamentals — five seconds each — or they vanish into the platform fog.",
     timePerQuestion: 10,
     failureConsequence: "The killer melts into Ashford. The Met files it under 'Unsolved'.",
     successReward: "You radio the platform constables in time. Every Car 4 passenger is detained.",
     questions: [
-      { prompt: "GROUP BY car, then COUNT — which clause names that?", options: ["WHERE COUNT > 1","HAVING COUNT(*) > 1","FILTER count","GROUP HAVING"], correctIndex: 1, explanation: "HAVING filters aggregated groups." },
-      { prompt: "INNER JOIN on a non-matching row yields…", options: ["a NULL row","is excluded","throws error","auto-fills 0"], correctIndex: 1, explanation: "INNER drops unmatched rows." },
-      { prompt: "Which returns the second-highest salary cleanly?", options: ["MAX(MAX(s))","LIMIT 2","ORDER BY s DESC LIMIT 1 OFFSET 1","TOP 2 s"], correctIndex: 2, explanation: "Skip one with OFFSET 1." },
-      { prompt: "Subquery in SELECT clause is called…", options: ["a CTE","a correlated/scalar subquery","a view","a window"], correctIndex: 1, explanation: "Scalar (or correlated) subquery returns one value per row." },
-      { prompt: "NULL = NULL evaluates to…", options: ["TRUE","FALSE","NULL/unknown","Error"], correctIndex: 2, explanation: "Three-valued logic. Use IS NULL." },
+      {
+        prompt: "GROUP BY car, then COUNT — which clause names that?",
+        options: ["WHERE COUNT > 1", "HAVING COUNT(*) > 1", "FILTER count", "GROUP HAVING"],
+        correctIndex: 1,
+        explanation: "HAVING filters aggregated groups.",
+      },
+      {
+        prompt: "INNER JOIN on a non-matching row yields…",
+        options: ["a NULL row", "is excluded", "throws error", "auto-fills 0"],
+        correctIndex: 1,
+        explanation: "INNER drops unmatched rows.",
+      },
+      {
+        prompt: "Which returns the second-highest salary cleanly?",
+        options: ["MAX(MAX(s))", "LIMIT 2", "ORDER BY s DESC LIMIT 1 OFFSET 1", "TOP 2 s"],
+        correctIndex: 2,
+        explanation: "Skip one with OFFSET 1.",
+      },
+      {
+        prompt: "Subquery in SELECT clause is called…",
+        options: ["a CTE", "a correlated/scalar subquery", "a view", "a window"],
+        correctIndex: 1,
+        explanation: "Scalar (or correlated) subquery returns one value per row.",
+      },
+      {
+        prompt: "NULL = NULL evaluates to…",
+        options: ["TRUE", "FALSE", "NULL/unknown", "Error"],
+        correctIndex: 2,
+        explanation: "Three-valued logic. Use IS NULL.",
+      },
     ],
   },
   suspects: [
-    { id:"2", name:"Margaret Doyle",   alias:"The Nurse",     description:"Carried digoxin. Argued with the victim at Welwyn." },
-    { id:"3", name:"Colonel Avery Finch", alias:"The Colonel", description:"In Car 2. Asleep, per the porter." },
-    { id:"4", name:"Lila Brennan",     alias:"The Journalist", description:"Boarded mid-trip. Held a grudge over an unpaid quote." },
-    { id:"5", name:"Thomas Pike",      alias:"The Solicitor", description:"Left Car 4 during the lethal window. Returned in time." },
-    { id:"6", name:"Nadia Kapoor",     alias:"The Pharmacist", description:"Boarded at Cambridge with a pharmacy ledger." },
+    {
+      id: "2",
+      name: "Margaret Doyle",
+      alias: "The Nurse",
+      description: "Carried digoxin. Argued with the victim at Welwyn.",
+    },
+    {
+      id: "3",
+      name: "Colonel Avery Finch",
+      alias: "The Colonel",
+      description: "In Car 2. Asleep, per the porter.",
+    },
+    {
+      id: "4",
+      name: "Lila Brennan",
+      alias: "The Journalist",
+      description: "Boarded mid-trip. Held a grudge over an unpaid quote.",
+    },
+    {
+      id: "5",
+      name: "Thomas Pike",
+      alias: "The Solicitor",
+      description: "Left Car 4 during the lethal window. Returned in time.",
+    },
+    {
+      id: "6",
+      name: "Nadia Kapoor",
+      alias: "The Pharmacist",
+      description: "Boarded at Cambridge with a pharmacy ledger.",
+    },
   ],
   murdererId: "2",
-  epilogue: "Margaret Doyle. Hartley had buried her malpractice complaint two years ago — Pike was about to reopen it. The digoxin matched. The empty syringe was found in the lavatory bin three cars down.",
+  epilogue:
+    "Margaret Doyle. Hartley had buried her malpractice complaint two years ago — Pike was about to reopen it. The digoxin matched. The empty syringe was found in the lavatory bin three cars down.",
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -349,7 +504,8 @@ const CASE_BLACKWOOD: Case = {
   tagline: "A locked study. A coded ledger. A killer with patience for spreadsheets.",
   location: "Cornish coast, England",
   year: "1989",
-  synopsis: "Lord Ambrose Blackwood died at his desk with a fountain pen in his neck. The estate's surveillance system, financial ledgers, and staff schedules survived him. Use them.",
+  synopsis:
+    "Lord Ambrose Blackwood died at his desk with a fountain pen in his neck. The estate's surveillance system, financial ledgers, and staff schedules survived him. Use them.",
   victim: "Lord Ambrose Blackwood — financier, 71",
   schemaSummary: `
 **staff** ( id, name, role, hired_year, salary )
@@ -421,10 +577,11 @@ INSERT INTO keys VALUES
       task: "Return staff names who hold a key to the Study.",
       hint: "JOIN keys → staff, JOIN keys → rooms WHERE rooms.name = 'Study'",
       validate: (rows) => {
-        const expected = [["Mrs. Hadley"],["Giles Thorpe"],["Daniel Reeve"]];
+        const expected = [["Mrs. Hadley"], ["Giles Thorpe"], ["Daniel Reeve"]];
         return { ok: equalsSet(rows, expected) };
       },
-      reveal: "Three keys. Housekeeper, butler, secretary. Anyone else got in by invitation — or violence.",
+      reveal:
+        "Three keys. Housekeeper, butler, secretary. Anyone else got in by invitation — or violence.",
     },
     {
       id: "c2",
@@ -433,34 +590,43 @@ INSERT INTO keys VALUES
       task: "From cam_log filtered to the Study (room_id=1), return ts and the visitor's NAME (joining staff or guests via person_type). Order by ts.",
       hint: "Use two LEFT JOINs (one to staff, one to guests) and COALESCE the names. Order by ts.",
       validate: (rows) => {
-        if (rows.length !== 9) return { ok: false, message: `Expected 9 Study visits, got ${rows.length}.` };
+        if (rows.length !== 9)
+          return { ok: false, message: `Expected 9 Study visits, got ${rows.length}.` };
         // first row should be 21:45 Cassandra
         const first = rows[0];
         return { ok: String(first[0]) === "21:45" && String(first[1]).includes("Cassandra") };
       },
-      reveal: "Daniel Reeve, secretary, returned to the Study five times in ninety minutes. Nobody else came close.",
+      reveal:
+        "Daniel Reeve, secretary, returned to the Study five times in ninety minutes. Nobody else came close.",
     },
     {
       id: "c3",
       title: "Chapter III — The Ledger's Whisper",
-      narrative: "Aggregate the ledger. Who pulled more than £10,000 in discretionary payments this year?",
+      narrative:
+        "Aggregate the ledger. Who pulled more than £10,000 in discretionary payments this year?",
       task: "Return staff name + SUM(amount) for ledger rows where memo LIKE 'Discretionary%', grouped by staff, having SUM > 10000.",
       hint: "GROUP BY beneficiary_staff_id; HAVING SUM(amount) > 10000",
-      validate: (rows) => rows.length === 1 && String(rows[0][0]).includes("Daniel") && Number(rows[0][1]) === 54000
-        ? { ok: true } : { ok: false, message: "One row. One name. £54,000." },
-      reveal: "Reeve drew £54,000 in 'discretionary' payments over four months. The pen wasn't the only thing in his hand.",
+      validate: (rows) =>
+        rows.length === 1 && String(rows[0][0]).includes("Daniel") && Number(rows[0][1]) === 54000
+          ? { ok: true }
+          : { ok: false, message: "One row. One name. £54,000." },
+      reveal:
+        "Reeve drew £54,000 in 'discretionary' payments over four months. The pen wasn't the only thing in his hand.",
     },
     {
       id: "c4",
       title: "Chapter IV — Window into the Crime",
-      narrative: "Use a window function. For every cam_log entry in the Study, get the time AND the previous visitor's name on the same row.",
+      narrative:
+        "Use a window function. For every cam_log entry in the Study, get the time AND the previous visitor's name on the same row.",
       task: "Return ts, visitor_name, AND prev_visitor_name (using LAG over Study visits ordered by ts).",
       hint: "WITH visits AS ( ... visitor name via COALESCE join ... ) SELECT ts, name, LAG(name) OVER (ORDER BY ts) FROM visits;",
       validate: (rows, cols) => {
-        if (cols.length < 3) return { ok: false, message: "Three columns required: ts, name, previous_name." };
-        if (rows.length !== 9) return { ok: false, message: `Expected 9 rows, got ${rows.length}.` };
+        if (cols.length < 3)
+          return { ok: false, message: "Three columns required: ts, name, previous_name." };
+        if (rows.length !== 9)
+          return { ok: false, message: `Expected 9 rows, got ${rows.length}.` };
         // Find the 22:30 row — previous visitor should be Julian Blackwood (22:00)? Actually 22:20 Daniel, so prev for 22:30 = Daniel Reeve
-        const row2230 = rows.find(r => String(r[0]) === "22:30");
+        const row2230 = rows.find((r) => String(r[0]) === "22:30");
         if (!row2230) return { ok: false, message: "Missing 22:30." };
         return { ok: String(row2230[2]).includes("Daniel") };
       },
@@ -469,39 +635,111 @@ INSERT INTO keys VALUES
     {
       id: "c5",
       title: "Chapter V — The Final Cross-Check",
-      narrative: "Confirm: the killer had a Study key, was in the Study at 22:30, and pulled discretionary funds > £10,000.",
+      narrative:
+        "Confirm: the killer had a Study key, was in the Study at 22:30, and pulled discretionary funds > £10,000.",
       task: "Write ONE query that returns the single staff name satisfying ALL three conditions.",
       hint: "Use INTERSECT, or three EXISTS subqueries, or chained joins with DISTINCT.",
-      validate: (rows) => rows.length === 1 && String(rows[0][0]).includes("Daniel")
-        ? { ok: true } : { ok: false, message: "One name. Three conditions." },
-      reveal: "Daniel Reeve. Trusted with the keys, the calendar, and the chequebook. He used all three.",
+      validate: (rows) =>
+        rows.length === 1 && String(rows[0][0]).includes("Daniel")
+          ? { ok: true }
+          : { ok: false, message: "One name. Three conditions." },
+      reveal:
+        "Daniel Reeve. Trusted with the keys, the calendar, and the chequebook. He used all three.",
     },
   ],
   rapidFire: {
-    intro: "Reeve is in the East Wing burning ledgers. The fire is spreading toward the rest of the evidence. Beat the flames — five questions, eight seconds each.",
+    intro:
+      "Reeve is in the East Wing burning ledgers. The fire is spreading toward the rest of the evidence. Beat the flames — five questions, eight seconds each.",
     timePerQuestion: 8,
-    failureConsequence: "The ledger burns. Without it, the Crown declines to prosecute. Reeve walks.",
+    failureConsequence:
+      "The ledger burns. Without it, the Crown declines to prosecute. Reeve walks.",
     successReward: "You seize the ledger before the binding chars. The case is airtight.",
     questions: [
-      { prompt: "ROW_NUMBER() OVER (PARTITION BY x ORDER BY y) — what does PARTITION do?", options: ["filters rows","resets the numbering per group","sorts globally","limits to one row"], correctIndex: 1, explanation: "PARTITION = group reset for the window." },
-      { prompt: "CTE keyword?", options: ["WITH","USING","DEFINE","TEMP"], correctIndex: 0, explanation: "WITH name AS ( ... ) SELECT ..." },
-      { prompt: "Difference: UNION vs UNION ALL?", options: ["UNION sorts; ALL doesn't","UNION dedupes; ALL keeps duplicates","UNION ALL is slower","No difference"], correctIndex: 1, explanation: "UNION removes duplicates; UNION ALL keeps them and is faster." },
-      { prompt: "EXPLAIN tells you…", options: ["the result","the query plan","syntax errors","data lineage"], correctIndex: 1, explanation: "EXPLAIN reveals the optimizer's plan." },
-      { prompt: "Recursive CTE requires…", options: ["RECURSIVE keyword + base + UNION ALL recursive","SELF JOIN only","a temp table","RANK()"], correctIndex: 0, explanation: "WITH RECURSIVE name AS (anchor UNION ALL recursive)." },
+      {
+        prompt: "ROW_NUMBER() OVER (PARTITION BY x ORDER BY y) — what does PARTITION do?",
+        options: [
+          "filters rows",
+          "resets the numbering per group",
+          "sorts globally",
+          "limits to one row",
+        ],
+        correctIndex: 1,
+        explanation: "PARTITION = group reset for the window.",
+      },
+      {
+        prompt: "CTE keyword?",
+        options: ["WITH", "USING", "DEFINE", "TEMP"],
+        correctIndex: 0,
+        explanation: "WITH name AS ( ... ) SELECT ...",
+      },
+      {
+        prompt: "Difference: UNION vs UNION ALL?",
+        options: [
+          "UNION sorts; ALL doesn't",
+          "UNION dedupes; ALL keeps duplicates",
+          "UNION ALL is slower",
+          "No difference",
+        ],
+        correctIndex: 1,
+        explanation: "UNION removes duplicates; UNION ALL keeps them and is faster.",
+      },
+      {
+        prompt: "EXPLAIN tells you…",
+        options: ["the result", "the query plan", "syntax errors", "data lineage"],
+        correctIndex: 1,
+        explanation: "EXPLAIN reveals the optimizer's plan.",
+      },
+      {
+        prompt: "Recursive CTE requires…",
+        options: [
+          "RECURSIVE keyword + base + UNION ALL recursive",
+          "SELF JOIN only",
+          "a temp table",
+          "RANK()",
+        ],
+        correctIndex: 0,
+        explanation: "WITH RECURSIVE name AS (anchor UNION ALL recursive).",
+      },
     ],
   },
   suspects: [
-    { id:"1", name:"Mrs. Hadley",   alias:"The Housekeeper",    description:"Twenty years of service. Key to the Study." },
-    { id:"2", name:"Giles Thorpe",  alias:"The Butler",         description:"Keys to half the manor. Loyal to a fault." },
-    { id:"5", name:"Daniel Reeve",  alias:"The Secretary",      description:"Two years employed. Holds the chequebook." },
-    { id:"6", name:"Imogen Carr",   alias:"The Nurse",          description:"New hire. Quiet. Watchful." },
-    { id:"g1", name:"Cassandra Blackwood", alias:"The Daughter", description:"Sole heir. Was in the Library at 22:25." },
-    { id:"g2", name:"Julian Blackwood", alias:"The Nephew",      description:"Gambling debts. Was in the Study at 22:00 and 22:45." },
+    {
+      id: "1",
+      name: "Mrs. Hadley",
+      alias: "The Housekeeper",
+      description: "Twenty years of service. Key to the Study.",
+    },
+    {
+      id: "2",
+      name: "Giles Thorpe",
+      alias: "The Butler",
+      description: "Keys to half the manor. Loyal to a fault.",
+    },
+    {
+      id: "5",
+      name: "Daniel Reeve",
+      alias: "The Secretary",
+      description: "Two years employed. Holds the chequebook.",
+    },
+    { id: "6", name: "Imogen Carr", alias: "The Nurse", description: "New hire. Quiet. Watchful." },
+    {
+      id: "g1",
+      name: "Cassandra Blackwood",
+      alias: "The Daughter",
+      description: "Sole heir. Was in the Library at 22:25.",
+    },
+    {
+      id: "g2",
+      name: "Julian Blackwood",
+      alias: "The Nephew",
+      description: "Gambling debts. Was in the Study at 22:00 and 22:45.",
+    },
   ],
   murdererId: "5",
-  epilogue: "Daniel Reeve. The 'discretionary' payments were extorted — Reeve had Blackwood's tax fraud on tape. When Blackwood threatened to come clean, Reeve drove the pen home and tried to burn the ledger. The window function caught what the cameras nearly missed.",
+  epilogue:
+    "Daniel Reeve. The 'discretionary' payments were extorted — Reeve had Blackwood's tax fraud on tape. When Blackwood threatened to come clean, Reeve drove the pen home and tried to burn the ledger. The window function caught what the cameras nearly missed.",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 export const CASES: Case[] = [CASE_VELVET, CASE_TRAIN, CASE_BLACKWOOD];
-export const getCase = (id: string) => CASES.find(c => c.id === id);
+export const getCase = (id: string) => CASES.find((c) => c.id === id);
