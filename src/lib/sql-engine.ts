@@ -2,9 +2,18 @@ import initSqlJs, { type Database, type SqlJsStatic, type SqlValue } from "sql.j
 
 let dbPromise: Promise<SqlJsStatic> | null = null;
 
+function locateSqlWasm(file: string) {
+  if (typeof window !== "undefined") {
+    return `/${file}`;
+  }
+
+  const pathname = decodeURIComponent(new URL(`../../public/${file}`, import.meta.url).pathname);
+  return pathname.replace(/^\/([A-Za-z]:)/, "$1");
+}
+
 async function getSql() {
   if (!dbPromise) {
-    dbPromise = initSqlJs({ locateFile: () => "/sql-wasm.wasm" });
+    dbPromise = initSqlJs({ locateFile: locateSqlWasm });
   }
   return dbPromise;
 }

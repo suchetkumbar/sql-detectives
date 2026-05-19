@@ -590,14 +590,14 @@ INSERT INTO keys VALUES
       task: "From cam_log filtered to the Study (room_id=1), return ts and the visitor's NAME (joining staff or guests via person_type). Order by ts.",
       hint: "Use two LEFT JOINs (one to staff, one to guests) and COALESCE the names. Order by ts.",
       validate: (rows) => {
-        if (rows.length !== 9)
-          return { ok: false, message: `Expected 9 Study visits, got ${rows.length}.` };
+        if (rows.length !== 10)
+          return { ok: false, message: `Expected 10 Study visits, got ${rows.length}.` };
         // first row should be 21:45 Cassandra
         const first = rows[0];
         return { ok: String(first[0]) === "21:45" && String(first[1]).includes("Cassandra") };
       },
       reveal:
-        "Daniel Reeve, secretary, returned to the Study five times in ninety minutes. Nobody else came close.",
+        "Daniel Reeve, secretary, returned to the Study six times in ninety minutes. Nobody else came close.",
     },
     {
       id: "c3",
@@ -623,8 +623,8 @@ INSERT INTO keys VALUES
       validate: (rows, cols) => {
         if (cols.length < 3)
           return { ok: false, message: "Three columns required: ts, name, previous_name." };
-        if (rows.length !== 9)
-          return { ok: false, message: `Expected 9 rows, got ${rows.length}.` };
+        if (rows.length !== 10)
+          return { ok: false, message: `Expected 10 rows, got ${rows.length}.` };
         // Find the 22:30 row — previous visitor should be Julian Blackwood (22:00)? Actually 22:20 Daniel, so prev for 22:30 = Daniel Reeve
         const row2230 = rows.find((r) => String(r[0]) === "22:30");
         if (!row2230) return { ok: false, message: "Missing 22:30." };

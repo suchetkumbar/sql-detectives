@@ -32,6 +32,7 @@ npm run build:dev
 npm run preview
 npm run lint
 npm run typecheck
+npm run test
 npm run format
 ```
 
