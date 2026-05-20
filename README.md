@@ -41,7 +41,8 @@ npm run format
 - `src/routes/index.tsx`: landing page.
 - `src/routes/cases.tsx`: case browser.
 - `src/routes/case.$caseId.tsx`: main gameplay flow.
-- `src/lib/cases.ts`: case content, schemas, validators, rapid-fire questions, suspects, and epilogues.
+- `src/lib/cases.ts`: public case registry and type exports.
+- `src/lib/cases/`: case modules, shared case types, validator helpers, and authoring template.
 - `src/lib/sql-engine.ts`: in-browser SQLite setup and query execution.
 - `src/components/SqlEditor.tsx`: SQL editor.
 - `src/components/ResultsTable.tsx`: query result display.
@@ -50,6 +51,6 @@ npm run format
 
 ## Adding Cases
 
-For now, cases are authored in `src/lib/cases.ts` as `Case` objects. Each case contains its SQLite schema, chapter prompts, validation functions, rapid-fire questions, suspect list, and epilogue.
+Cases are authored as `Case` objects in `src/lib/cases/`. Each case contains its SQLite schema, chapter prompts, validation functions, rapid-fire questions, suspect list, and epilogue.
 
-The planned architecture work will split each case into its own module and add an authoring template.
+Use `src/lib/cases/template.ts` as the starter shape and `src/lib/cases/README.md` for the authoring checklist. Register new cases in `src/lib/cases.ts`, then add intended-solution fixtures in `src/lib/cases.test.ts`.
