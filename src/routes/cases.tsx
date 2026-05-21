@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { CASES } from "@/lib/cases";
+import { isCaseCompleted, loadProgress } from "@/lib/progress";
 
 export const Route = createFileRoute("/cases")({
   head: () => ({
@@ -21,6 +23,22 @@ const diffStyle: Record<string, string> = {
 };
 
 function CasesPage() {
+  const [progressState, setProgressState] = useState<Record<string, { completed: boolean; inProgress: boolean }>>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const map = CASES.reduce((acc, c) => {
+      const persisted = loadProgress(c.id);
+      const completed = persisted ? isCaseCompleted(persisted) : false;
+      const inProgress = persisted ? !completed && persisted.phase.kind !== "intro" : false;
+      acc[c.id] = { completed, inProgress };
+      return acc;
+    }, {} as Record<string, { completed: boolean; inProgress: boolean }>);
+
+    setProgressState(map);
+  }, []);
+
   return (
     <main className="min-h-screen max-w-5xl mx-auto px-6 py-10">
       <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
@@ -40,13 +58,22 @@ function CasesPage() {
             className="surface surface-hover rounded-xl p-6 flex flex-col md:flex-row md:items-center gap-6 group"
           >
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
                 <span className={`chip chip-dot ${diffStyle[c.difficulty]}`}>
                   <span>{c.difficulty}</span>
                 </span>
                 <span className="chip">
                   {c.location} · {c.year}
                 </span>
+                {progressState[c.id]?.completed ? (
+                  <span className="chip chip-dot text-success">
+                    <span>Completed</span>
+                  </span>
+                ) : progressState[c.id]?.inProgress ? (
+                  <span className="chip chip-dot text-accent">
+                    <span>In progress</span>
+                  </span>
+                ) : null}
               </div>
               <h2 className="text-3xl group-hover:text-primary transition">{c.title}</h2>
               <p className="italic text-muted-foreground mt-1">{c.tagline}</p>

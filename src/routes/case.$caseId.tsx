@@ -2,7 +2,8 @@ import { createFileRoute, Link, useParams, notFound } from "@tanstack/react-rout
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getCase } from "@/lib/cases";
-import { createDatabase, runQuery, type QueryResult } from "@/lib/sql-engine";
+import { createDatabase, createDatabaseFromBytes, runQuery, type QueryResult } from "@/lib/sql-engine";
+import { clearProgress, isProgressEmpty, loadProgress, saveProgress } from "@/lib/progress";
 import { SqlEditor } from "@/components/SqlEditor";
 import { ResultsTable } from "@/components/ResultsTable";
 import { RapidFire } from "@/components/RapidFire";
@@ -68,6 +69,8 @@ function PlayPage() {
     total: number;
   } | null>(null);
   const [pickedSuspect, setPickedSuspect] = useState<string | null>(null);
+  const [dbSnapshot, setDbSnapshot] = useState<Uint8Array | null>(null);
+  const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -76,6 +79,7 @@ function PlayPage() {
       .then((d) => {
         if (!active) return;
         setDb(d);
+        setDbSnapshot(d.export());
         setLoadingDb(false);
       })
       .catch((e) => {
@@ -87,20 +91,47 @@ function PlayPage() {
     };
   }, [theCase.schema]);
 
+  useEffect(() => {
+    const persisted = loadProgress(caseId);
+    if (!persisted) return;
+
+    setPhase(persisted.phase);
+    setUnlockedReveals(persisted.unlockedReveals);
+    setSqlText(persisted.sqlText);
+    setRapidResult(persisted.rapidResult);
+    setPickedSuspect(persisted.pickedSuspect);
+    setHasRestoredProgress(true);
+  }, [caseId]);
+
   const currentChapter = phase.kind === "chapter" ? theCase.chapters[phase.index] : null;
 
   useEffect(() => {
-    if (currentChapter) {
-      setSqlText(currentChapter.starterSql ?? "");
-      setResult(null);
-      setValidation(null);
-      setShowHint(false);
-    }
-  }, [currentChapter]);
+    if (!currentChapter) return;
 
-  const runSql = () => {
-    if (!db || !sqlText.trim()) return;
-    const r = runQuery(db, sqlText);
+    setResult(null);
+    setValidation(null);
+    setShowHint(false);
+
+    if (hasRestoredProgress) {
+      setHasRestoredProgress(false);
+      return;
+    }
+
+    setSqlText(currentChapter.starterSql ?? "");
+  }, [currentChapter, hasRestoredProgress]);
+
+  const runSql = async () => {
+    if (!dbSnapshot || !sqlText.trim()) return;
+
+    const destructive = /(^|\s)(ALTER|CREATE|DROP|INSERT|UPDATE|DELETE|REPLACE|PRAGMA)\b/i.test(sqlText.trim());
+    if (destructive) {
+      setResult({ columns: [], rows: [], rowCount: 0, error: "Destructive statements are blocked. Queries run against a fresh case snapshot for progress safety." });
+      setValidation(null);
+      return;
+    }
+
+    const replayDb = await createDatabaseFromBytes(dbSnapshot);
+    const r = runQuery(replayDb, sqlText);
     setResult(r);
     if (currentChapter && !r.error) {
       const v = currentChapter.validate(r.rows, r.columns);
@@ -126,6 +157,36 @@ function PlayPage() {
     } else {
       setPhase({ kind: "chapter", index: phase.index + 1 });
     }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const currentProgress = {
+      phase,
+      unlockedReveals,
+      sqlText,
+      rapidResult,
+      pickedSuspect,
+    };
+
+    if (isProgressEmpty(currentProgress)) {
+      clearProgress(caseId);
+      return;
+    }
+
+    saveProgress(caseId, currentProgress);
+  }, [caseId, phase, unlockedReveals, sqlText, rapidResult, pickedSuspect]);
+
+  const resetProgress = () => {
+    clearProgress(caseId);
+    setPhase({ kind: "intro" });
+    setUnlockedReveals([]);
+    setSqlText("");
+    setResult(null);
+    setValidation(null);
+    setRapidResult(null);
+    setPickedSuspect(null);
+    setShowHint(false);
   };
 
   if (loadingDb) {
@@ -158,12 +219,20 @@ function PlayPage() {
           </div>
           <h1 className="text-2xl md:text-3xl truncate">{theCase.title}</h1>
         </div>
-        <button
-          onClick={() => setShowSchema(true)}
-          className="text-sm text-primary hover:underline underline-offset-4 shrink-0"
-        >
-          Schema
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowSchema(true)}
+            className="text-sm text-primary hover:underline underline-offset-4"
+          >
+            Schema
+          </button>
+          <button
+            onClick={resetProgress}
+            className="text-sm text-destructive hover:underline underline-offset-4"
+          >
+            Reset case
+          </button>
+        </div>
       </div>
 
       <ChapterRail

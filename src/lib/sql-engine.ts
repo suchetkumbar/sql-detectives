@@ -25,6 +25,11 @@ export async function createDatabase(schemaSql: string): Promise<Database> {
   return db;
 }
 
+export async function createDatabaseFromBytes(databaseBytes: Uint8Array): Promise<Database> {
+  const SQL = await getSql();
+  return new SQL.Database(databaseBytes);
+}
+
 export interface QueryResult {
   columns: string[];
   rows: SqlValue[][];
