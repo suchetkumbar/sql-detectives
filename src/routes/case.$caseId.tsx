@@ -1,8 +1,13 @@
 import { createFileRoute, Link, useParams, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getCase } from "@/lib/cases";
-import { createDatabase, createDatabaseFromBytes, runQuery, type QueryResult } from "@/lib/sql-engine";
+import {
+  createDatabase,
+  createDatabaseFromBytes,
+  runQuery,
+  type QueryResult,
+} from "@/lib/sql-engine";
 import { clearProgress, isProgressEmpty, loadProgress, saveProgress } from "@/lib/progress";
 import { SqlEditor } from "@/components/SqlEditor";
 import { ResultsTable } from "@/components/ResultsTable";
@@ -71,6 +76,22 @@ function PlayPage() {
   const [pickedSuspect, setPickedSuspect] = useState<string | null>(null);
   const [dbSnapshot, setDbSnapshot] = useState<Uint8Array | null>(null);
   const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
+  const schemaCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!showSchema) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowSchema(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    schemaCloseButtonRef.current?.focus();
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showSchema]);
 
   useEffect(() => {
     let active = true;
@@ -123,9 +144,17 @@ function PlayPage() {
   const runSql = async () => {
     if (!dbSnapshot || !sqlText.trim()) return;
 
-    const destructive = /(^|\s)(ALTER|CREATE|DROP|INSERT|UPDATE|DELETE|REPLACE|PRAGMA)\b/i.test(sqlText.trim());
+    const destructive = /(^|\s)(ALTER|CREATE|DROP|INSERT|UPDATE|DELETE|REPLACE|PRAGMA)\b/i.test(
+      sqlText.trim(),
+    );
     if (destructive) {
-      setResult({ columns: [], rows: [], rowCount: 0, error: "Destructive statements are blocked. Queries run against a fresh case snapshot for progress safety." });
+      setResult({
+        columns: [],
+        rows: [],
+        rowCount: 0,
+        error:
+          "Destructive statements are blocked. Queries run against a fresh case snapshot for progress safety.",
+      });
       setValidation(null);
       return;
     }
@@ -221,13 +250,17 @@ function PlayPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => setShowSchema(true)}
+            aria-label="Open case schema"
             className="text-sm text-primary hover:underline underline-offset-4"
           >
             Schema
           </button>
           <button
+            type="button"
             onClick={resetProgress}
+            aria-label="Reset current case progress"
             className="text-sm text-destructive hover:underline underline-offset-4"
           >
             Reset case
@@ -298,8 +331,10 @@ function PlayPage() {
                     <p className="text-foreground">{currentChapter.task}</p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setShowHint((s) => !s)}
-                    className="mt-4 text-xs text-muted-foreground hover:text-primary transition"
+                    aria-label={showHint ? "Hide chapter hint" : "Show chapter hint"}
+                    className="mt-4 text-xs text-muted-foreground hover:text-primary transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {showHint ? "− Hide hint" : "+ Show hint"}
                   </button>
@@ -347,8 +382,10 @@ function PlayPage() {
                         </div>
                         {validation.ok && (
                           <button
+                            type="button"
                             onClick={advanceChapter}
-                            className="shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+                            aria-label="Move to the next chapter"
+                            className="shrink-0 px-4 py-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           >
                             Next →
                           </button>
@@ -391,11 +428,13 @@ function PlayPage() {
                       : theCase.rapidFire.failureConsequence}
                   </p>
                   <button
+                    type="button"
                     onClick={() => {
                       const rapidAt = Math.max(0, theCase.chapters.length - 2);
                       setPhase({ kind: "chapter", index: rapidAt });
                     }}
-                    className="mt-6 px-6 py-2.5 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+                    aria-label="Resume your investigation"
+                    className="mt-6 px-6 py-2.5 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     Resume investigation →
                   </button>
@@ -424,6 +463,8 @@ function PlayPage() {
                   {theCase.suspects.map((s) => (
                     <button
                       key={s.id}
+                      type="button"
+                      aria-label={`Choose ${s.name} as the suspect`}
                       onClick={() => {
                         setPickedSuspect(s.id);
                         const correct = s.id === theCase.murdererId;
@@ -470,11 +511,13 @@ function PlayPage() {
                 <div className="mt-8 flex flex-wrap gap-3 justify-center">
                   <Link
                     to="/cases"
-                    className="px-5 py-2.5 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+                    aria-label="Go to the case browser"
+                    className="px-5 py-2.5 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     Next case →
                   </Link>
                   <button
+                    type="button"
                     onClick={() => {
                       setPhase({ kind: "intro" });
                       setUnlockedReveals([]);
@@ -483,7 +526,8 @@ function PlayPage() {
                       setValidation(null);
                       setResult(null);
                     }}
-                    className="px-5 py-2.5 rounded-md border border-border hover:border-primary/50 transition"
+                    aria-label="Replay the case from the beginning"
+                    className="px-5 py-2.5 rounded-md border border-border hover:border-primary/50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     Replay
                   </button>
@@ -499,16 +543,25 @@ function PlayPage() {
         <div
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end md:items-center justify-center p-4"
           onClick={() => setShowSchema(false)}
+          role="presentation"
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="schema-dialog-title"
             onClick={(e) => e.stopPropagation()}
             className="surface rounded-xl p-6 max-w-2xl w-full"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-2xl">Schema</h3>
+              <h3 id="schema-dialog-title" className="text-2xl">
+                Schema
+              </h3>
               <button
+                ref={schemaCloseButtonRef}
+                type="button"
                 onClick={() => setShowSchema(false)}
-                className="text-sm text-muted-foreground hover:text-foreground"
+                aria-label="Close schema dialog"
+                className="text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Close ✕
               </button>

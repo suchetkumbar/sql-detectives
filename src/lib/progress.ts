@@ -21,8 +21,8 @@ export function progressStorageKey(caseId: string) {
 
 function getStorage(): Storage | null {
   if (typeof window !== "undefined") return window.localStorage;
-  if (typeof globalThis !== "undefined" && typeof (globalThis as any).localStorage !== "undefined") {
-    return (globalThis as any).localStorage as Storage;
+  if (typeof globalThis !== "undefined" && "localStorage" in globalThis) {
+    return globalThis.localStorage;
   }
   return null;
 }
@@ -35,23 +35,28 @@ export function loadProgress(caseId: string): CaseProgress | null {
   if (!stored) return null;
 
   try {
-    const parsed = JSON.parse(stored) as Partial<CaseProgress>;
+    const parsed = JSON.parse(stored) as Partial<Record<string, unknown>>;
     if (!parsed || typeof parsed !== "object") return null;
 
     const phase = parsed.phase as PersistedPhase | undefined;
     if (!phase || typeof phase.kind !== "string") return null;
 
+    const rapidResult = parsed.rapidResult;
+
     return {
       phase,
-      unlockedReveals: Array.isArray(parsed.unlockedReveals) ? parsed.unlockedReveals.filter(Boolean) : [],
+      unlockedReveals: Array.isArray(parsed.unlockedReveals)
+        ? parsed.unlockedReveals.filter((value): value is string => typeof value === "string")
+        : [],
       sqlText: typeof parsed.sqlText === "string" ? parsed.sqlText : "",
-      rapidResult: parsed.rapidResult && typeof parsed.rapidResult === "object"
-        ? {
-            passed: Boolean(parsed.rapidResult.passed),
-            correct: Number(parsed.rapidResult.correct) || 0,
-            total: Number(parsed.rapidResult.total) || 0,
-          }
-        : null,
+      rapidResult:
+        rapidResult && typeof rapidResult === "object"
+          ? {
+              passed: Boolean((rapidResult as Record<string, unknown>).passed),
+              correct: Number((rapidResult as Record<string, unknown>).correct) || 0,
+              total: Number((rapidResult as Record<string, unknown>).total) || 0,
+            }
+          : null,
       pickedSuspect:
         parsed.pickedSuspect === null || typeof parsed.pickedSuspect === "string"
           ? parsed.pickedSuspect

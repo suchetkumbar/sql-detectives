@@ -5,25 +5,38 @@ describe("progress persistence", () => {
   beforeEach(() => {
     if (typeof window !== "undefined") {
       window.localStorage.clear();
-    } else if (typeof globalThis !== "undefined" && (globalThis as any).localStorage) {
-      (globalThis as any).localStorage.clear();
-    } else {
-      (globalThis as any).localStorage = {
-        _data: {} as Record<string, string>,
-        getItem(key: string) {
-          return this._data[key] ?? null;
-        },
-        setItem(key: string, value: string) {
-          this._data[key] = value;
-        },
-        removeItem(key: string) {
-          delete this._data[key];
-        },
-        clear() {
-          this._data = {} as Record<string, string>;
-        },
-      };
+      return;
     }
+
+    if (typeof globalThis !== "undefined" && "localStorage" in globalThis) {
+      globalThis.localStorage.clear();
+      return;
+    }
+
+    const memoryStorage = {
+      _data: {} as Record<string, string>,
+      clear() {
+        this._data = {};
+      },
+      getItem(key: string) {
+        return this._data[key] ?? null;
+      },
+      key(_index: number) {
+        return null;
+      },
+      removeItem(key: string) {
+        delete this._data[key];
+      },
+      setItem(key: string, value: string) {
+        this._data[key] = value;
+      },
+    } as Storage & { _data: Record<string, string> };
+
+    Object.defineProperty(globalThis, "localStorage", {
+      value: memoryStorage,
+      configurable: true,
+      writable: true,
+    });
   });
 
   it("saves and loads a case progress record", () => {

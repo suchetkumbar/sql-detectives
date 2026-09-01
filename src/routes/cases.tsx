@@ -23,18 +23,23 @@ const diffStyle: Record<string, string> = {
 };
 
 function CasesPage() {
-  const [progressState, setProgressState] = useState<Record<string, { completed: boolean; inProgress: boolean }>>({});
+  const [progressState, setProgressState] = useState<
+    Record<string, { completed: boolean; inProgress: boolean }>
+  >({});
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const map = CASES.reduce((acc, c) => {
-      const persisted = loadProgress(c.id);
-      const completed = persisted ? isCaseCompleted(persisted) : false;
-      const inProgress = persisted ? !completed && persisted.phase.kind !== "intro" : false;
-      acc[c.id] = { completed, inProgress };
-      return acc;
-    }, {} as Record<string, { completed: boolean; inProgress: boolean }>);
+    const map = CASES.reduce(
+      (acc, c) => {
+        const persisted = loadProgress(c.id);
+        const completed = persisted ? isCaseCompleted(persisted) : false;
+        const inProgress = persisted ? !completed && persisted.phase.kind !== "intro" : false;
+        acc[c.id] = { completed, inProgress };
+        return acc;
+      },
+      {} as Record<string, { completed: boolean; inProgress: boolean }>,
+    );
 
     setProgressState(map);
   }, []);
