@@ -3,15 +3,18 @@ import type { QueryResult } from "@/lib/sql-engine";
 export function ResultsTable({ result }: { result: QueryResult | null }) {
   if (!result) {
     return (
-      <div className="surface rounded-lg p-6 text-center text-sm text-muted-foreground">
+      <div className="surface rounded-lg p-5 text-center text-sm text-muted-foreground">
+        <div className="mono mb-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          Ready
+        </div>
         Run a query to see results.
       </div>
     );
   }
   if (result.error) {
     return (
-      <div className="rounded-lg p-4 border border-destructive/40 bg-destructive/10 mono text-sm">
-        <div className="text-xs text-destructive mb-1 uppercase tracking-wider">SQL Error</div>
+      <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 mono text-sm">
+        <div className="mb-1 text-xs uppercase tracking-wider text-destructive">SQL Error</div>
         <div className="text-foreground/90">{result.error}</div>
       </div>
     );
@@ -19,6 +22,9 @@ export function ResultsTable({ result }: { result: QueryResult | null }) {
   if (!result.columns.length) {
     return (
       <div className="surface rounded-lg p-4 text-sm text-muted-foreground">
+        <div className="mono mb-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          Query complete
+        </div>
         Statement executed. No rows returned.
       </div>
     );

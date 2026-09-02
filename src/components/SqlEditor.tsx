@@ -18,10 +18,11 @@ export function SqlEditor({ value, onChange, onRun, height = "200px" }: Props) {
           <span className="mono text-xs text-muted-foreground">query.sql</span>
         </div>
         <button
+          type="button"
           onClick={onRun}
-          className="mono text-xs px-2.5 py-1 rounded bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+          className="mono text-xs rounded bg-primary px-2.5 py-1.5 font-medium text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          Run ↵ <span className="opacity-60 ml-1">⌘↵</span>
+          Run ↵ <span className="ml-1 opacity-70">⌘↵</span>
         </button>
       </div>
       <CodeMirror

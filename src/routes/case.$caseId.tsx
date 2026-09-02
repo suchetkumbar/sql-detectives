@@ -232,23 +232,23 @@ function PlayPage() {
   return (
     <main className="min-h-screen max-w-7xl mx-auto px-4 md:px-6 py-6">
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-6 gap-4">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           to="/cases"
           className="text-sm text-muted-foreground hover:text-foreground transition shrink-0"
         >
           ← Cases
         </Link>
-        <div className="text-center min-w-0 flex-1">
-          <div className="flex items-center justify-center gap-2 mb-1">
+        <div className="min-w-0 flex-1 text-center sm:text-center">
+          <div className="mb-1 flex items-center justify-center gap-2">
             <span className={`chip chip-dot ${diffStyle[theCase.difficulty]}`}>
               <span>{theCase.difficulty}</span>
             </span>
             <span className="mono text-xs text-muted-foreground">{theCase.year}</span>
           </div>
-          <h1 className="text-2xl md:text-3xl truncate">{theCase.title}</h1>
+          <h1 className="truncate text-2xl md:text-3xl">{theCase.title}</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center gap-3 sm:justify-end">
           <button
             type="button"
             onClick={() => setShowSchema(true)}
@@ -284,22 +284,25 @@ function PlayPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              <div className="surface rounded-xl p-8 md:p-12 max-w-3xl mx-auto text-center">
+              <div className="surface mx-auto max-w-3xl rounded-xl p-6 text-center md:p-12">
                 <span className="chip chip-dot text-primary mb-4">
                   <span>Case open</span>
                 </span>
-                <h2 className="text-4xl md:text-5xl mt-2">{theCase.title}</h2>
-                <p className="italic text-muted-foreground mt-2">{theCase.tagline}</p>
+                <h2 className="mt-2 text-4xl md:text-5xl">{theCase.title}</h2>
+                <p className="mt-2 italic text-muted-foreground">{theCase.tagline}</p>
                 <div className="my-6 h-px bg-border" />
-                <p className="text-lg text-balance leading-relaxed">{theCase.synopsis}</p>
+                <p className="text-balance text-lg leading-relaxed text-foreground/90">
+                  {theCase.synopsis}
+                </p>
                 <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                   <span className="mono text-xs uppercase tracking-wider">Victim</span>
                   <span>·</span>
                   <span>{theCase.victim}</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setPhase({ kind: "chapter", index: 0 })}
-                  className="mt-8 px-6 py-2.5 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+                  className="mt-8 inline-flex items-center justify-center rounded-md bg-primary px-6 py-2.5 font-medium text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   Begin chapter 1 →
                 </button>
@@ -314,32 +317,34 @@ function PlayPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              <div className="grid lg:grid-cols-5 gap-6">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.45fr)]">
                 {/* Story column */}
-                <div className="lg:col-span-2 surface rounded-xl p-6">
-                  <div className="mono text-xs text-muted-foreground uppercase tracking-wider">
+                <div className="surface rounded-xl p-4 md:p-6">
+                  <div className="mono text-xs uppercase tracking-wider text-muted-foreground">
                     Chapter {phase.index + 1} / {theCase.chapters.length}
                   </div>
-                  <h2 className="text-2xl mt-1.5">{currentChapter.title}</h2>
-                  <p className="mt-4 text-foreground/90 leading-relaxed">
+                  <h2 className="mt-1.5 text-2xl">{currentChapter.title}</h2>
+                  <p className="mt-4 text-base leading-relaxed text-foreground/90">
                     {currentChapter.narrative}
                   </p>
-                  <div className="mt-5 border-l-2 border-primary pl-4 py-1">
-                    <div className="mono text-xs text-primary uppercase tracking-wider mb-1">
+
+                  <div className="mt-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
+                    <div className="mono mb-1 text-xs uppercase tracking-wider text-primary">
                       Your task
                     </div>
-                    <p className="text-foreground">{currentChapter.task}</p>
+                    <p className="text-base text-foreground">{currentChapter.task}</p>
                   </div>
+
                   <button
                     type="button"
                     onClick={() => setShowHint((s) => !s)}
                     aria-label={showHint ? "Hide chapter hint" : "Show chapter hint"}
-                    className="mt-4 text-xs text-muted-foreground hover:text-primary transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="mt-4 text-xs text-muted-foreground transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     {showHint ? "− Hide hint" : "+ Show hint"}
                   </button>
                   {showHint && (
-                    <pre className="mt-2 bg-[#0f1418] border border-border rounded-md p-3 text-xs mono text-foreground/80 whitespace-pre-wrap">
+                    <pre className="mt-2 rounded-md border border-border bg-[#0f1418] p-3 text-xs mono text-foreground/80 whitespace-pre-wrap">
                       {currentChapter.hint}
                     </pre>
                   )}
@@ -348,9 +353,9 @@ function PlayPage() {
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="mt-5 p-4 border border-success/40 bg-success/10 rounded-lg"
+                      className="mt-5 rounded-lg border border-success/40 bg-success/10 p-4"
                     >
-                      <div className="mono text-xs text-success uppercase tracking-wider mb-1">
+                      <div className="mono mb-1 text-xs uppercase tracking-wider text-success">
                         Evidence logged
                       </div>
                       <p className="italic text-foreground/90">{currentChapter.reveal}</p>
@@ -359,8 +364,13 @@ function PlayPage() {
                 </div>
 
                 {/* Editor column */}
-                <div className="lg:col-span-3 space-y-4">
-                  <SqlEditor value={sqlText} onChange={setSqlText} onRun={runSql} />
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-border bg-card/40 p-2 md:p-3">
+                    <div className="mono mb-2 px-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                      Query console
+                    </div>
+                    <SqlEditor value={sqlText} onChange={setSqlText} onRun={runSql} />
+                  </div>
                   <ResultsTable result={result} />
 
                   {validation && (
