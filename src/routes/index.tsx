@@ -25,25 +25,29 @@ const diffStyle: Record<string, string> = {
 };
 
 function Landing() {
+  const totalChapters = CASES.reduce((sum, c) => sum + c.chapters.length, 0);
+  const totalRapidFire = CASES.reduce((sum, c) => sum + c.rapidFire.questions.length, 0);
+
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="grid-bg absolute inset-0 -z-10" />
 
-      <header className="max-w-6xl mx-auto px-6 pt-6 flex items-center justify-between">
+      <header className="mx-auto flex max-w-6xl flex-col gap-3 px-4 pt-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-primary/15 border border-primary/30 grid place-items-center">
+          <div className="grid h-7 w-7 place-items-center rounded-md border border-primary/30 bg-primary/15">
             <div className="h-2 w-2 rounded-full bg-primary" />
           </div>
           <span className="font-medium">Coldcase</span>
           <span className="chip">SQL</span>
         </div>
-        <nav className="flex items-center gap-6 text-sm">
-          <Link to="/cases" className="text-muted-foreground hover:text-foreground transition">
+
+        <nav className="flex items-center gap-3 text-sm sm:gap-6">
+          <Link to="/cases" className="text-muted-foreground transition hover:text-foreground">
             Cases
           </Link>
           <Link
             to="/cases"
-            className="px-3.5 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition text-sm font-medium"
+            className="rounded-md bg-primary px-3.5 py-1.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Start playing
           </Link>
@@ -51,34 +55,36 @@ function Landing() {
       </header>
 
       {/* HERO */}
-      <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
+      <section className="mx-auto max-w-6xl px-4 pb-16 pt-16 text-center sm:px-6 md:pt-24 md:pb-20">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
           <span className="chip chip-dot text-primary mb-6">
-            <span>Now with 3 cases · 14 chapters</span>
+            <span>
+              Now with {CASES.length} cases · {totalChapters} chapters
+            </span>
           </span>
-          <h1 className="text-5xl md:text-7xl leading-[1.05] text-balance max-w-4xl mx-auto">
-            Learn SQL by <em className="text-primary not-italic font-display italic">solving</em>{" "}
+          <h1 className="mx-auto max-w-4xl text-balance text-5xl leading-[1.05] md:text-7xl">
+            Learn SQL by <em className="font-display text-primary not-italic italic">solving</em>{" "}
             mysteries.
           </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto text-balance">
-            Three story-driven cases. Real SQLite in your browser. Every query you write is the next
-            move in the investigation.
+          <p className="mx-auto mt-6 max-w-xl text-balance text-lg text-muted-foreground">
+            Story-driven investigations, real SQLite in your browser, and a steady climb from first
+            query to full case closure.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3 justify-center">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               to="/case/$caseId"
               params={{ caseId: "velvet-lounge" }}
-              className="px-5 py-2.5 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+              className="rounded-md bg-primary px-5 py-2.5 font-medium text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Start your first case →
             </Link>
             <Link
               to="/cases"
-              className="px-5 py-2.5 rounded-md border border-border hover:border-primary/50 transition"
+              className="rounded-md border border-border px-5 py-2.5 transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Browse all cases
             </Link>
@@ -140,15 +146,15 @@ function Landing() {
         </motion.div>
 
         {/* stats */}
-        <div className="mt-14 grid grid-cols-3 max-w-2xl mx-auto gap-4">
+        <div className="mx-auto mt-14 grid max-w-2xl gap-4 sm:grid-cols-3">
           {[
-            { k: "3", v: "Cases" },
-            { k: "14", v: "Chapters" },
-            { k: "15", v: "Rapid-fire questions" },
+            { k: String(CASES.length), v: "Cases" },
+            { k: String(totalChapters), v: "Chapters" },
+            { k: String(totalRapidFire), v: "Rapid-fire questions" },
           ].map((s) => (
             <div key={s.v} className="surface rounded-lg p-4">
               <div className="text-3xl font-display text-primary">{s.k}</div>
-              <div className="mono text-xs text-muted-foreground mt-1 uppercase tracking-wider">
+              <div className="mono mt-1 text-xs uppercase tracking-wider text-muted-foreground">
                 {s.v}
               </div>
             </div>
@@ -157,8 +163,8 @@ function Landing() {
       </section>
 
       {/* FEATURES */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
-        <div className="grid md:grid-cols-3 gap-4">
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+        <div className="grid gap-4 md:grid-cols-3">
           {[
             {
               t: "Real SQLite",
@@ -174,26 +180,27 @@ function Landing() {
             },
           ].map((f) => (
             <div key={f.t} className="surface surface-hover rounded-xl p-5">
-              <div className="h-8 w-8 rounded-md bg-primary/15 border border-primary/30 mb-4" />
+              <div className="mb-4 h-8 w-8 rounded-md border border-primary/30 bg-primary/15" />
               <h3 className="text-xl">{f.t}</h3>
-              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{f.d}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{f.d}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* CASES */}
-      <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div className="flex items-end justify-between mb-6">
+      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-4xl">The cases</h2>
-            <p className="text-muted-foreground mt-2">Start light, then climb.</p>
+            <p className="mt-2 text-muted-foreground">Start light, then climb.</p>
           </div>
           <Link to="/cases" className="text-sm text-primary hover:underline underline-offset-4">
             All cases →
           </Link>
         </div>
-        <div className="grid md:grid-cols-3 gap-4">
+
+        <div className="grid gap-4 md:grid-cols-3">
           {CASES.map((c, i) => (
             <motion.div
               key={c.id}
@@ -205,16 +212,18 @@ function Landing() {
               <Link
                 to="/case/$caseId"
                 params={{ caseId: c.id }}
-                className="block surface surface-hover rounded-xl p-5 h-full"
+                className="block h-full rounded-xl border border-border bg-card/40 p-5 transition hover:border-primary/50"
               >
-                <div className="flex items-center justify-between mb-3">
+                <div className="mb-3 flex items-center justify-between">
                   <span className={`chip chip-dot ${diffStyle[c.difficulty]}`}>
                     <span>{c.difficulty}</span>
                   </span>
                   <span className="mono text-xs text-muted-foreground">{c.year}</span>
                 </div>
+
                 <h3 className="text-2xl">{c.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1.5">{c.tagline}</p>
+                <p className="mt-1.5 text-sm text-muted-foreground">{c.tagline}</p>
+
                 <div className="mt-5 flex items-center justify-between text-xs mono text-muted-foreground">
                   <span>
                     {c.chapters.length} chapters · {c.suspects.length} suspects
@@ -228,7 +237,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border/60">
-        <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>Coldcase SQL · a learning game</span>
           <span className="mono">Every query runs real SQLite (WASM)</span>
         </div>
