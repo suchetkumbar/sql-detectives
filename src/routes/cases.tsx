@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import { CASES } from "@/lib/cases";
 import { isCaseCompleted, loadProgress } from "@/lib/progress";
 
@@ -23,6 +24,8 @@ const diffStyle: Record<string, string> = {
 };
 
 function CasesPage() {
+  const [query, setQuery] = useState("");
+  const [activeTag, setActiveTag] = useState("All cases");
   const [progressState, setProgressState] = useState<
     Record<string, { completed: boolean; inProgress: boolean }>
   >({});
@@ -44,6 +47,16 @@ function CasesPage() {
     setProgressState(map);
   }, []);
 
+  const availableTags = ["All cases", ...new Set(CASES.flatMap((c) => c.tags))];
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredCases = CASES.filter((c) => {
+    const matchesTag = activeTag === "All cases" || c.tags.includes(activeTag);
+    const searchable = [c.title, c.tagline, c.location, c.difficulty, ...c.tags]
+      .join(" ")
+      .toLowerCase();
+    return matchesTag && (!normalizedQuery || searchable.includes(normalizedQuery));
+  });
+
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 md:px-6 md:py-10">
       <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
@@ -58,8 +71,46 @@ function CasesPage() {
         <p className="mt-2 text-muted-foreground">Pick a file. Read the brief. Bring your SQL.</p>
       </header>
 
+      <section aria-label="Filter case files" className="mb-8 space-y-3">
+        <div className="relative max-w-xl">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search cases, techniques, or locations"
+            aria-label="Search cases, techniques, or locations"
+            className="h-11 w-full rounded-lg border border-border bg-card/60 pl-10 pr-4 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40"
+          />
+        </div>
+        <div
+          className="flex gap-2 overflow-x-auto pb-1"
+          role="group"
+          aria-label="Filter by SQL technique"
+        >
+          {availableTags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setActiveTag(tag)}
+              aria-pressed={activeTag === tag}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                activeTag === tag
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <div className="grid gap-4">
-        {CASES.map((c) => (
+        {filteredCases.map((c) => (
           <Link
             key={c.id}
             to="/case/$caseId"
@@ -74,6 +125,11 @@ function CasesPage() {
                 <span className="chip">
                   {c.location} · {c.year}
                 </span>
+                {c.tags.slice(0, 2).map((tag) => (
+                  <span key={tag} className="chip hidden sm:inline-flex">
+                    {tag}
+                  </span>
+                ))}
                 {progressState[c.id]?.completed ? (
                   <span className="chip chip-dot text-success">
                     <span>Completed</span>
@@ -107,6 +163,25 @@ function CasesPage() {
           </Link>
         ))}
       </div>
+
+      {filteredCases.length === 0 && (
+        <div className="surface rounded-xl p-8 text-center">
+          <h2 className="text-2xl">No case files found</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Try another search or clear the active filter.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setActiveTag("All cases");
+            }}
+            className="mt-5 rounded-md border border-border px-4 py-2 text-sm transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            Show all cases
+          </button>
+        </div>
+      )}
     </main>
   );
 }

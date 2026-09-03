@@ -6,6 +6,7 @@ import { containsRow, equalsSet } from "./validators";
 export const CASE_BLACKWOOD: Case = {
   id: "blackwood-manor",
   difficulty: "advanced",
+  tags: ["ctes", "window functions", "advanced"],
   title: "The Cipher of Blackwood Manor",
   tagline: "A locked study. A coded ledger. A killer with patience for spreadsheets.",
   location: "Cornish coast, England",

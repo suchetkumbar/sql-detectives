@@ -14,6 +14,7 @@ Each case is a self-contained SQLite mystery. A case owns its story metadata, sc
 
 1. Copy `template.ts` to a new file named after the case id.
 2. Fill in the case metadata and schema.
+	Include three to five concise `tags` describing the SQL techniques or learning level.
 3. Add chapters with focused SQL tasks and validators.
 4. Add rapid-fire questions and final suspect data.
 5. Export the case constant.

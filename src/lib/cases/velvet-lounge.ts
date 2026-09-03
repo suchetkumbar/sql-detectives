@@ -7,6 +7,7 @@ import { containsRow, equalsSet } from "./validators";
 export const CASE_VELVET: Case = {
   id: "velvet-lounge",
   difficulty: "beginner",
+  tags: ["joins", "filtering", "beginner-friendly"],
   title: "The Velvet Lounge",
   tagline: "A jazz singer. A spilled martini. A body behind the curtain.",
   location: "Manhattan, NYC",

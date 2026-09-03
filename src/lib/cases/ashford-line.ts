@@ -6,6 +6,7 @@ import { containsRow, equalsSet } from "./validators";
 export const CASE_TRAIN: Case = {
   id: "ashford-line",
   difficulty: "intermediate",
+  tags: ["joins", "grouping", "intermediate"],
   title: "Last Train to Ashford",
   tagline: "Eight cars. Forty-one passengers. One stops breathing.",
   location: "British Midlands",

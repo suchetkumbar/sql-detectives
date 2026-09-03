@@ -3,6 +3,7 @@ import type { Case } from "./types";
 export const CASE_TEMPLATE: Case = {
   id: "new-case-id",
   difficulty: "beginner",
+  tags: ["joins", "beginner-friendly"],
   title: "New Case Title",
   tagline: "A short hook for the case.",
   location: "Case location",

@@ -30,6 +30,7 @@ export interface Suspect {
 export interface Case {
   id: string;
   difficulty: Difficulty;
+  tags: string[];
   title: string;
   tagline: string;
   location: string;
