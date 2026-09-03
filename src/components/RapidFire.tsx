@@ -55,7 +55,7 @@ export function RapidFire({ intro, questions, timePerQuestion, onComplete }: Pro
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="surface rounded-xl p-8 text-center max-w-2xl mx-auto"
+        className="surface mx-auto max-w-2xl rounded-xl p-6 text-center md:p-8"
       >
         <span className="chip chip-dot text-destructive mb-4">
           <span>Rapid fire</span>
@@ -65,8 +65,9 @@ export function RapidFire({ intro, questions, timePerQuestion, onComplete }: Pro
           {questions.length} questions · {timePerQuestion}s each · 60% to pass
         </p>
         <button
+          type="button"
           onClick={() => setStarted(true)}
-          className="mt-6 px-6 py-2.5 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+          className="mt-6 rounded-md bg-primary px-6 py-2.5 font-medium text-primary-foreground transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           Begin →
         </button>
@@ -78,14 +79,21 @@ export function RapidFire({ intro, questions, timePerQuestion, onComplete }: Pro
   const pct = (time / timePerQuestion) * 100;
 
   return (
-    <div className="surface rounded-xl p-6 md:p-8 max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mono text-xs text-muted-foreground">
+    <div className="surface mx-auto max-w-3xl rounded-xl p-5 md:p-8">
+      <div className="flex items-center justify-between gap-4 mono text-xs text-muted-foreground">
         <span>
           Question {idx + 1} of {questions.length}
         </span>
         <span className={time <= 3 ? "text-destructive" : "text-primary"}>{time}s</span>
       </div>
-      <div className="h-1 bg-secondary mt-2 rounded overflow-hidden">
+      <div
+        className="mt-2 h-1 overflow-hidden rounded bg-secondary"
+        role="progressbar"
+        aria-label="Time remaining"
+        aria-valuemin={0}
+        aria-valuemax={timePerQuestion}
+        aria-valuenow={time}
+      >
         <div
           className={`h-full transition-[width] duration-1000 linear ${time <= 3 ? "bg-destructive" : "bg-primary"}`}
           style={{ width: `${pct}%` }}
@@ -98,8 +106,8 @@ export function RapidFire({ intro, questions, timePerQuestion, onComplete }: Pro
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
         >
-          <h3 className="text-2xl md:text-3xl mt-6 text-balance">{q.prompt}</h3>
-          <div className="grid sm:grid-cols-2 gap-3 mt-6">
+          <h3 className="mt-6 text-balance text-2xl md:text-3xl">{q.prompt}</h3>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {q.options.map((opt, i) => {
               const isCorrect = i === q.correctIndex;
               const isPicked = picked === i;
@@ -107,10 +115,12 @@ export function RapidFire({ intro, questions, timePerQuestion, onComplete }: Pro
               return (
                 <button
                   key={i}
+                  type="button"
                   disabled={picked !== null}
                   onClick={() => handlePick(i)}
+                  aria-label={`Answer ${String.fromCharCode(65 + i)}: ${opt}`}
                   className={[
-                    "text-left p-4 rounded-lg border transition text-sm",
+                    "rounded-lg border p-4 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     show && isCorrect
                       ? "border-success bg-success/10"
                       : show && isPicked
@@ -132,6 +142,9 @@ export function RapidFire({ intro, questions, timePerQuestion, onComplete }: Pro
               animate={{ opacity: 1 }}
               className="mt-4 text-sm text-muted-foreground"
             >
+              <span className="font-medium text-foreground">
+                {picked === q.correctIndex ? "Correct. " : "Not quite. "}
+              </span>
               {q.explanation}
             </motion.p>
           )}

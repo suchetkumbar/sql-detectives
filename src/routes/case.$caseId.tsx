@@ -389,6 +389,12 @@ function PlayPage() {
                           {validation.message && (
                             <p className="mt-1 text-sm text-foreground/90">{validation.message}</p>
                           )}
+                          {!validation.ok && (
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              Review the task, adjust the query, and run it again. Your progress is
+                              saved automatically.
+                            </p>
+                          )}
                         </div>
                         {validation.ok && (
                           <button
